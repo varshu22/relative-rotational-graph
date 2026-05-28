@@ -1,0 +1,206 @@
+{
+  "ADANIENT": {
+    "name": "Adani Enterprises",
+    "sector": "Diversified"
+  },
+  "ADANIPORTS": {
+    "name": "Adani Ports",
+    "sector": "Infrastructure"
+  },
+  "APOLLOHOSP": {
+    "name": "Apollo Hospitals",
+    "sector": "Healthcare"
+  },
+  "ASIANPAINT": {
+    "name": "Asian Paints",
+    "sector": "Paints"
+  },
+  "AXISBANK": {
+    "name": "Axis Bank",
+    "sector": "Banking"
+  },
+  "BAJAJ-AUTO": {
+    "name": "Bajaj Auto",
+    "sector": "Automobile"
+  },
+  "BAJAJFINSV": {
+    "name": "Bajaj Finserv",
+    "sector": "Financial Services"
+  },
+  "BAJFINANCE": {
+    "name": "Bajaj Finance",
+    "sector": "Financial Services"
+  },
+  "BEL": {
+    "name": "Bharat Electronics",
+    "sector": "Defence"
+  },
+  "BHARTIARTL": {
+    "name": "Bharti Airtel",
+    "sector": "Telecom"
+  },
+  "BPCL": {
+    "name": "BPCL",
+    "sector": "Oil & Gas"
+  },
+  "BRITANNIA": {
+    "name": "Britannia",
+    "sector": "FMCG"
+  },
+  "CIPLA": {
+    "name": "Cipla",
+    "sector": "Pharmaceuticals"
+  },
+  "COALINDIA": {
+    "name": "Coal India",
+    "sector": "Mining"
+  },
+  "DRREDDY": {
+    "name": "Dr Reddy's",
+    "sector": "Pharmaceuticals"
+  },
+  "EICHERMOT": {
+    "name": "Eicher Motors",
+    "sector": "Automobile"
+  },
+  "ETERNAL": {
+    "name": "Eternal",
+    "sector": "Technology"
+  },
+  "GRASIM": {
+    "name": "Grasim",
+    "sector": "Cement"
+  },
+  "HCLTECH": {
+    "name": "HCL Technologies",
+    "sector": "IT"
+  },
+  "HDFCBANK": {
+    "name": "HDFC Bank",
+    "sector": "Banking"
+  },
+  "HDFCLIFE": {
+    "name": "HDFC Life",
+    "sector": "Insurance"
+  },
+  "HEROMOTOCO": {
+    "name": "Hero MotoCorp",
+    "sector": "Automobile"
+  },
+  "HINDALCO": {
+    "name": "Hindalco",
+    "sector": "Metals"
+  },
+  "HINDUNILVR": {
+    "name": "Hindustan Unilever",
+    "sector": "FMCG"
+  },
+  "ICICIBANK": {
+    "name": "ICICI Bank",
+    "sector": "Banking"
+  },
+  "INDUSINDBK": {
+    "name": "IndusInd Bank",
+    "sector": "Banking"
+  },
+  "INFY": {
+    "name": "Infosys",
+    "sector": "IT"
+  },
+  "ITC": {
+    "name": "ITC",
+    "sector": "FMCG"
+  },
+  "JIOFIN": {
+    "name": "Jio Financial",
+    "sector": "Financial Services"
+  },
+  "JSWSTEEL": {
+    "name": "JSW Steel",
+    "sector": "Metals"
+  },
+  "KOTAKBANK": {
+    "name": "Kotak Mahindra Bank",
+    "sector": "Banking"
+  },
+  "LT": {
+    "name": "Larsen & Toubro",
+    "sector": "Infrastructure"
+  },
+  "M&M": {
+    "name": "Mahindra & Mahindra",
+    "sector": "Automobile"
+  },
+  "MARUTI": {
+    "name": "Maruti Suzuki",
+    "sector": "Automobile"
+  },
+  "NESTLEIND": {
+    "name": "Nestle India",
+    "sector": "FMCG"
+  },
+  "NTPC": {
+    "name": "NTPC",
+    "sector": "Power"
+  },
+  "ONGC": {
+    "name": "ONGC",
+    "sector": "Oil & Gas"
+  },
+  "POWERGRID": {
+    "name": "Power Grid",
+    "sector": "Power"
+  },
+  "RELIANCE": {
+    "name": "Reliance Industries",
+    "sector": "Oil & Gas"
+  },
+  "SBILIFE": {
+    "name": "SBI Life",
+    "sector": "Insurance"
+  },
+  "SBIN": {
+    "name": "State Bank of India",
+    "sector": "Banking"
+  },
+  "SHRIRAMFIN": {
+    "name": "Shriram Finance",
+    "sector": "Financial Services"
+  },
+  "SUNPHARMA": {
+    "name": "Sun Pharma",
+    "sector": "Pharmaceuticals"
+  },
+  "TATACONSUM": {
+    "name": "Tata Consumer",
+    "sector": "FMCG"
+  },
+  "TATASTEEL": {
+    "name": "Tata Steel",
+    "sector": "Metals"
+  },
+  "TCS": {
+    "name": "TCS",
+    "sector": "IT"
+  },
+  "TECHM": {
+    "name": "Tech Mahindra",
+    "sector": "IT"
+  },
+  "TITAN": {
+    "name": "Titan",
+    "sector": "Consumer Goods"
+  },
+  "TRENT": {
+    "name": "Trent",
+    "sector": "Retail"
+  },
+  "ULTRACEMCO": {
+    "name": "UltraTech Cement",
+    "sector": "Cement"
+  },
+  "WIPRO": {
+    "name": "Wipro",
+    "sector": "IT"
+  }
+}

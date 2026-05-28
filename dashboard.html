@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RRG Terminal · Nifty 50</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+:root{
+  --bg:#0a0e14; --panel:#0f1620; --panel2:#131c28; --line:#1e2a3a;
+  --txt:#e6edf3; --dim:#7d8da0; --faint:#4a5666;
+  --lead:#16c784; --weak:#f7a600; --impr:#4d9fff; --lag:#ed5565;
+  --lead-bg:rgba(22,199,132,.12); --weak-bg:rgba(247,166,0,.12);
+  --impr-bg:rgba(77,159,255,.12); --lag-bg:rgba(237,85,101,.12);
+  --accent:#16c784;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--txt);font-family:'Space Grotesk',sans-serif;
+  font-size:14px;line-height:1.4;overflow-x:hidden;
+  background-image:radial-gradient(circle at 15% 10%,rgba(22,199,132,.04),transparent 40%),radial-gradient(circle at 85% 90%,rgba(77,159,255,.04),transparent 40%);}
+.mono{font-family:'JetBrains Mono',monospace}
+.wrap{max-width:1500px;margin:0 auto;padding:20px}
+header{display:flex;align-items:center;justify-content:space-between;
+  padding:16px 22px;background:linear-gradient(135deg,var(--panel),var(--panel2));
+  border:1px solid var(--line);border-radius:14px;margin-bottom:18px;
+  box-shadow:0 8px 32px rgba(0,0,0,.4)}
+.brand{display:flex;align-items:center;gap:14px}
+.logo{width:42px;height:42px;border-radius:11px;background:linear-gradient(135deg,var(--lead),var(--impr));
+  display:grid;place-items:center;font-weight:800;font-size:20px;color:#04140d;
+  box-shadow:0 0 24px rgba(22,199,132,.4)}
+.brand h1{font-size:19px;font-weight:700;letter-spacing:.5px}
+.brand .sub{font-size:11px;color:var(--dim);letter-spacing:2px;text-transform:uppercase}
+.status{display:flex;align-items:center;gap:18px}
+.stat-chip{text-align:right}
+.stat-chip .k{font-size:10px;color:var(--faint);text-transform:uppercase;letter-spacing:1px}
+.stat-chip .v{font-size:15px;font-weight:600}
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--lead);
+  margin-right:6px;box-shadow:0 0 8px var(--lead);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.grid{display:grid;grid-template-columns:1.55fr 1fr;gap:18px;margin-bottom:18px}
+@media(max-width:1100px){.grid{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;
+  padding:18px;box-shadow:0 4px 20px rgba(0,0,0,.3)}
+.card-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.card-h h2{font-size:13px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim)}
+.quad-counts{display:flex;gap:8px}
+.qc{font-size:11px;padding:3px 9px;border-radius:20px;font-weight:600;font-family:'JetBrains Mono'}
+.qc.l{background:var(--lead-bg);color:var(--lead)}
+.qc.w{background:var(--weak-bg);color:var(--weak)}
+.qc.i{background:var(--impr-bg);color:var(--impr)}
+.qc.g{background:var(--lag-bg);color:var(--lag)}
+/* RRG chart */
+#rrg{width:100%;display:block;border-radius:10px;background:
+  radial-gradient(circle at center,rgba(255,255,255,.015),transparent 70%)}
+.legend{display:flex;gap:16px;margin-top:12px;flex-wrap:wrap;font-size:11px;color:var(--dim)}
+.legend span{display:flex;align-items:center;gap:6px}
+.lgd{width:10px;height:10px;border-radius:3px}
+/* summary panel */
+.quad-box{display:grid;grid-template-columns:1fr 1fr;gap:12px;height:100%}
+.qbig{border-radius:12px;padding:16px;position:relative;overflow:hidden;border:1px solid var(--line);
+  display:flex;flex-direction:column;justify-content:space-between;min-height:118px;cursor:pointer;transition:.2s}
+.qbig:hover{transform:translateY(-2px);border-color:currentColor}
+.qbig.l{background:linear-gradient(135deg,var(--lead-bg),transparent)}
+.qbig.w{background:linear-gradient(135deg,var(--weak-bg),transparent)}
+.qbig.i{background:linear-gradient(135deg,var(--impr-bg),transparent)}
+.qbig.g{background:linear-gradient(135deg,var(--lag-bg),transparent)}
+.qbig .lbl{font-size:11px;letter-spacing:1px;text-transform:uppercase;font-weight:600}
+.qbig.l .lbl,.qbig.l .num{color:var(--lead)}
+.qbig.w .lbl,.qbig.w .num{color:var(--weak)}
+.qbig.i .lbl,.qbig.i .num{color:var(--impr)}
+.qbig.g .lbl,.qbig.g .num{color:var(--lag)}
+.qbig .num{font-size:38px;font-weight:800;font-family:'JetBrains Mono';line-height:1}
+.qbig .act{font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:1px}
+.qbig .pct{position:absolute;top:14px;right:16px;font-size:12px;font-family:'JetBrains Mono';opacity:.6}
+/* table */
+.controls{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
+.seg{display:flex;background:var(--panel2);border:1px solid var(--line);border-radius:9px;overflow:hidden}
+.seg button{background:none;border:none;color:var(--dim);padding:8px 14px;font-size:12px;
+  font-family:'Space Grotesk';font-weight:500;cursor:pointer;transition:.15s}
+.seg button.on{background:var(--accent);color:#04140d;font-weight:700}
+.seg button:hover:not(.on){color:var(--txt)}
+.search{background:var(--panel2);border:1px solid var(--line);border-radius:9px;
+  padding:8px 12px;color:var(--txt);font-family:'JetBrains Mono';font-size:12px;flex:1;min-width:120px}
+.search:focus{outline:none;border-color:var(--accent)}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--faint);
+  padding:10px 12px;border-bottom:1px solid var(--line);cursor:pointer;user-select:none;white-space:nowrap}
+th:hover{color:var(--dim)}
+th.num,td.num{text-align:right;font-family:'JetBrains Mono'}
+td{padding:11px 12px;border-bottom:1px solid rgba(30,42,58,.5);font-size:13px}
+tbody tr{transition:.12s}
+tbody tr:hover{background:var(--panel2)}
+.sym{font-weight:700;font-family:'JetBrains Mono';font-size:13px}
+.nm{font-size:11px;color:var(--faint);margin-top:1px}
+.badge{font-size:10px;font-weight:700;padding:3px 9px;border-radius:6px;font-family:'JetBrains Mono';letter-spacing:.5px}
+.badge.LEADING{background:var(--lead-bg);color:var(--lead)}
+.badge.WEAKENING{background:var(--weak-bg);color:var(--weak)}
+.badge.IMPROVING{background:var(--impr-bg);color:var(--impr)}
+.badge.LAGGING{background:var(--lag-bg);color:var(--lag)}
+.sig{font-weight:700;font-size:11px;font-family:'JetBrains Mono'}
+.sig.BUY{color:var(--lead)} .sig.EXIT{color:var(--weak)}
+.sig.WATCH{color:var(--impr)} .sig.AVOID{color:var(--lag)}
+.up{color:var(--lead)} .down{color:var(--lag)}
+.sector-tag{font-size:10px;color:var(--dim);background:var(--panel2);padding:2px 7px;border-radius:5px}
+.bar{height:5px;border-radius:3px;background:var(--panel2);overflow:hidden;margin-top:5px}
+.bar i{display:block;height:100%;border-radius:3px}
+footer{text-align:center;color:var(--faint);font-size:11px;margin-top:20px;line-height:1.8}
+.banner{background:var(--weak-bg);border:1px solid var(--weak);color:var(--weak);
+  padding:10px 16px;border-radius:10px;margin-bottom:16px;font-size:12px;display:none}
+.tip{cursor:help;border-bottom:1px dotted var(--faint)}
+.tooltip{position:fixed;background:#000;border:1px solid var(--line);border-radius:8px;
+  padding:8px 11px;font-size:11px;color:var(--txt);pointer-events:none;opacity:0;
+  transition:.15s;z-index:100;max-width:220px;box-shadow:0 8px 24px rgba(0,0,0,.6)}
+</style>
+</head>
+<body>
+<div style="background:#1a1a1a;color:#999;font-size:11px;text-align:center;padding:5px 10px;border-bottom:1px solid #333;font-family:system-ui,sans-serif">
+  Educational tool, not investment advice. Data via Yahoo Finance (may be delayed or inaccurate). Updated daily after market close.
+</div>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <div class="logo">R</div>
+      <div>
+        <h1>RRG TERMINAL</h1>
+        <div class="sub">Nifty 50 · Relative Rotation</div>
+      </div>
+    </div>
+    <div class="status">
+      <div class="stat-chip"><div class="k">As Of</div><div class="v mono" id="asof">—</div></div>
+      <div class="stat-chip"><div class="k">History</div><div class="v mono" id="ndays">—</div></div>
+      <div class="stat-chip"><div class="k">Feed</div><div class="v" id="feed"><span class="dot"></span>SEED</div></div>
+    </div>
+  </header>
+
+  <div class="banner" id="banner"></div>
+
+  <div class="grid">
+    <div class="card">
+      <div class="card-h">
+        <h2>Relative Rotation Graph</h2>
+        <div class="quad-counts" id="counts"></div>
+      </div>
+      <svg id="rrg" viewBox="0 0 600 480"></svg>
+      <div class="legend">
+        <span><i class="lgd" style="background:var(--lead)"></i>Leading · buy</span>
+        <span><i class="lgd" style="background:var(--weak)"></i>Weakening · exit</span>
+        <span><i class="lgd" style="background:var(--impr)"></i>Improving · watch</span>
+        <span><i class="lgd" style="background:var(--lag)"></i>Lagging · avoid</span>
+        <span style="margin-left:auto;color:var(--faint)">tails = last 10 days · hover dots for detail</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-h"><h2>Quadrant Census</h2></div>
+      <div class="quad-box" id="census"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-h">
+      <h2>Stock Matrix</h2>
+    </div>
+    <div class="controls">
+      <div class="seg" id="filter">
+        <button data-q="ALL" class="on">All</button>
+        <button data-q="LEADING">Leading</button>
+        <button data-q="IMPROVING">Improving</button>
+        <button data-q="WEAKENING">Weakening</button>
+        <button data-q="LAGGING">Lagging</button>
+      </div>
+      <input class="search" id="search" placeholder="filter symbol / sector...">
+    </div>
+    <div style="overflow-x:auto">
+    <table>
+      <thead><tr>
+        <th data-s="symbol">Symbol</th>
+        <th data-s="sector">Sector</th>
+        <th data-s="close" class="num">Close</th>
+        <th data-s="day_chg" class="num">1D %</th>
+        <th data-s="rs" class="num">RS-Ratio</th>
+        <th data-s="mom" class="num">Momentum</th>
+        <th data-s="quadrant">Quadrant</th>
+        <th data-s="signal">Signal</th>
+      </tr></thead>
+      <tbody id="tbody"></tbody>
+    </table>
+    </div>
+  </div>
+
+  <footer>
+    Generated <span id="gen" class="mono">—</span> · JdK RS-Ratio (63d z-score) · Momentum (5d ROC) · boundary fixed at 100<br>
+    Educational tool · not investment advice · paper-trade first
+  </footer>
+</div>
+
+<div class="tooltip" id="tt"></div>
+
+<script>
+const SEED = {"as_of":"2026-05-15","n_days":248,"stocks":[{"symbol":"ADANIENT","name":"Adani Enterprises","sector":"Diversified","close":2716.0,"rs":114.04,"mom":102.59,"quadrant":"LEADING","signal":"BUY","day_chg":0.11,"trail":[{"date":"2026-05-04","rs":114.39,"mom":101.0},{"date":"2026-05-05","rs":112.94,"mom":96.58},{"date":"2026-05-06","rs":113.53,"mom":98.82},{"date":"2026-05-07","rs":111.94,"mom":97.99},{"date":"2026-05-08","rs":111.45,"mom":98.37},{"date":"2026-05-11","rs":111.66,"mom":97.27},{"date":"2026-05-12","rs":109.7,"mom":96.76},{"date":"2026-05-13","rs":111.54,"mom":98.01},{"date":"2026-05-14","rs":115.08,"mom":103.14},{"date":"2026-05-15","rs":114.04,"mom":102.59}]},{"symbol":"ADANIPORTS","name":"Adani Ports","sector":"Infrastructure","close":1795.1,"rs":112.12,"mom":99.09,"quadrant":"WEAKENING","signal":"EXIT","day_chg":1.22,"trail":[{"date":"2026-05-04","rs":116.27,"mom":102.96},{"date":"2026-05-05","rs":114.42,"mom":100.87},{"date":"2026-05-06","rs":113.55,"mom":100.19},{"date":"2026-05-07","rs":112.02,"mom":98.58},{"date":"2026-05-08","rs":113.04,"mom":100.25},{"date":"2026-05-11","rs":113.58,"mom":97.31},{"date":"2026-05-12","rs":110.68,"mom":96.26},{"date":"2026-05-13","rs":112.06,"mom":98.51},{"date":"2026-05-14","rs":111.91,"mom":99.89},{"date":"2026-05-15","rs":112.12,"mom":99.09}]},{"symbol":"APOLLOHOSP","name":"Apollo Hospitals","sector":"Healthcare","close":8082.5,"rs":110.14,"mom":101.96,"quadrant":"LEADING","signal":"BUY","day_chg":-0.45,"trail":[{"date":"2026-05-04","rs":103.7,"mom":98.42},{"date":"2026-05-05","rs":104.43,"mom":99.72},{"date":"2026-05-06","rs":102.9,"mom":99.45},{"date":"2026-05-07","rs":103.87,"mom":100.71},{"date":"2026-05-08","rs":108.18,"mom":105.13},{"date":"2026-05-11","rs":109.64,"mom":105.93},{"date":"2026-05-12","rs":110.82,"mom":106.39},{"date":"2026-05-13","rs":110.23,"mom":107.33},{"date":"2026-05-14","rs":110.46,"mom":106.6},{"date":"2026-05-15","rs":110.14,"mom":101.96}]},{"symbol":"ASIANPAINT","name":"Asian Paints","sector":"Paints","close":2605.6,"rs":111.54,"mom":98.53,"quadrant":"WEAKENING","signal":"EXIT","day_chg":-0.63,"trail":[{"date":"2026-05-04","rs":107.08,"mom":99.17},{"date":"2026-05-05","rs":106.33,"mom":98.82},{"date":"2026-05-06","rs":109.24,"mom":103.1},{"date":"2026-05-07","rs":109.44,"mom":101.9},{"date":"2026-05-08","rs":113.01,"mom":105.27},{"date":"2026-05-11","rs":112.37,"mom":105.29},{"date":"2026-05-12","rs":111.02,"mom":104.69},{"date":"2026-05-13","rs":114.82,"mom":105.59},{"date":"2026-05-14","rs":112.72,"mom":103.28},{"date":"2026-05-15","rs":111.54,"mom":98.53}]},{"symbol":"AXISBANK","name":"Axis Bank","sector":"Banking","close":1244.8,"rs":96.26,"mom":100.12,"quadrant":"IMPROVING","signal":"WATCH","day_chg":-0.78,"trail":[{"date":"2026-05-04","rs":97.37,"mom":93.1},{"date":"2026-05-05","rs":95.99,"mom":95.56},{"date":"2026-05-06","rs":98.54,"mom":98.52},{"date":"2026-05-07","rs":98.32,"mom":100.9},{"date":"2026-05-08","rs":96.14,"mom":98.76},{"date":"2026-05-11","rs":99.17,"mom":101.8},{"date":"2026-05-12","rs":100.62,"mom":104.63},{"date":"2026-05-13","rs":99.67,"mom":101.13},{"date":"2026-05-14","rs":97.34,"mom":99.02},{"date":"2026-05-15","rs":96.26,"mom":100.12}]},{"symbol":"BAJAJ-AUTO","name":"Bajaj Auto","sector":"Automobile","close":10377.5,"rs":110.98,"mom":93.87,"quadrant":"WEAKENING","signal":"EXIT","day_chg":-0.7,"trail":[{"date":"2026-05-04","rs":113.12,"mom":106.93},{"date":"2026-05-05","rs":111.57,"mom":108.02},{"date":"2026-05-06","rs":113.24,"mom":110.31},{"date":"2026-05-07","rs":116.35,"mom":103.28},{"date":"2026-05-08","rs":117.11,"mom":104.84},{"date":"2026-05-11","rs":116.09,"mom":102.97},{"date":"2026-05-12","rs":114.71,"mom":103.15},{"date":"2026-05-13","rs":112.07,"mom":98.84},{"date":"2026-05-14","rs":112.22,"mom":95.87},{"date":"2026-05-15","rs":110.98,"mom":93.87}]},{"symbol":"BAJAJFINSV","name":"Bajaj Finserv","sector":"Financial Services","close":1728.1,"rs":94.44,"mom":96.2,"quadrant":"LAGGING","signal":"AVOID","day_chg":-0.7,"trail":[{"date":"2026-05-04","rs":94.19,"mom":100.75},{"date":"2026-05-05","rs":96.91,"mom":102.03},{"date":"2026-05-06","rs":98.61,"mom":106.02},{"date":"2026-05-07","rs":97.71,"mom":105.18},{"date":"2026-05-08","rs":98.24,"mom":105.47},{"date":"2026-05-11","rs":98.59,"mom":104.4},{"date":"2026-05-12","rs":97.21,"mom":100.29},{"date":"2026-05-13","rs":95.7,"mom":97.09},{"date":"2026-05-14","rs":95.04,"mom":97.32},{"date":"2026-05-15","rs":94.44,"mom":96.2}]},{"symbol":"BAJFINANCE","name":"Bajaj Finance","sector":"Financial Services","close":910.45,"rs":100.76,"mom":95.68,"quadrant":"WEAKENING","signal":"EXIT","day_chg":-0.19,"trail":[{"date":"2026-05-04","rs":105.53,"mom":104.01},{"date":"2026-05-05","rs":107.26,"mom":104.88},{"date":"2026-05-06","rs":108.61,"mom":106.41},{"date":"2026-05-07","rs":107.13,"mom":102.71},{"date":"2026-05-08","rs":105.08,"mom":100.81},{"date":"2026-05-11","rs":104.11,"mom":98.58},{"date":"2026-05-12","rs":101.54,"mom":94.27},{"date":"2026-05-13","rs":99.95,"mom":91.34},{"date":"2026-05-14","rs":100.82,"mom":93.7},{"date":"2026-05-15","rs":100.76,"mom":95.68}]},{"symbol":"BEL","name":"Bharat Electronics","sector":"Defence","close":423.65,"rs":98.06,"mom":97.1,"quadrant":"LAGGING","signal":"AVOID","day_chg":-1.21,"trail":[{"date":"2026-05-04","rs":99.72,"mom":98.65},{"date":"2026-05-05","rs":100.06,"mom":98.65},{"date":"2026-05-06","rs":99.87,"mom":99.0},{"date":"2026-05-07","rs":100.2,"mom":100.32},{"date":"2026-05-08","rs":100.97,"mom":101.26},{"date":"2026-05-11","rs":100.48,"mom":100.76},{"date":"2026-05-12","rs":97.92,"mom":97.87},{"date":"2026-05-13","rs":101.42,"mom":101.55},{"date":"2026-05-14","rs":99.77,"mom":99.57},{"date":"2026-05-15","rs":98.06,"mom":97.1}]},{"symbol":"BHARTIARTL","name":"Bharti Airtel","sector":"Telecom","close":1905.4,"rs":110.25,"mom":115.28,"quadrant":"LEADING","signal":"BUY","day_chg":1.16,"trail":[{"date":"2026-05-04","rs":93.61,"mom":100.97},{"date":"2026-05-05","rs":91.77,"mom":94.42},{"date":"2026-05-06","rs":92.78,"mom":90.86},{"date":"2026-05-07","rs":92.14,"mom":88.23},{"date":"2026-05-08","rs":94.96,"mom":91.08},{"date":"2026-05-11","rs":88.94,"mom":95.33},{"date":"2026-05-12","rs":93.22,"mom":101.45},{"date":"2026-05-13","rs":97.42,"mom":104.64},{"date":"2026-05-14","rs":107.3,"mom":115.17},{"date":"2026-05-15","rs":110.25,"mom":115.28}]},{"symbol":"BPCL","name":"BPCL","sector":"Oil & Gas","close":284.45,"rs":94.03,"mom":98.28,"quadrant":"LAGGING","signal":"AVOID","day_chg":-3.58,"trail":[{"date":"2026-05-04","rs":95.15,"mom":98.46},{"date":"2026-05-05","rs":94.91,"mom":98.84},{"date":"2026-05-06","rs":97.28,"mom":102.29},{"date":"2026-05-07","rs":96.18,"mom":101.28},{"date":"2026-05-08","rs":95.74,"mom":100.69},{"date":"2026-05-11","rs":95.15,"mom":99.99},{"date":"2026-05-12","rs":95.05,"mom":100.15},{"date":"2026-05-13","rs":96.98,"mom":99.7},{"date":"2026-05-14","rs":95.95,"mom":99.78},{"date":"2026-05-15","rs":94.03,"mom":98.28}]},{"symbol":"BRITANNIA","name":"Britannia","sector":"FMCG","close":5406.0,"rs":91.36,"mom":100.31,"quadrant":"IMPROVING","signal":"WATCH","day_chg":0.62,"trail":[{"date":"2026-05-04","rs":101.68,"mom":101.95},{"date":"2026-05-05","rs":103.75,"mom":105.17},{"date":"2026-05-06","rs":99.28,"mom":100.58},{"date":"2026-05-07","rs":100.36,"mom":99.75},{"date":"2026-05-08","rs":91.05,"mom":90.5},{"date":"2026-05-11","rs":90.11,"mom":88.43},{"date":"2026-05-12","rs":91.0,"mom":87.25},{"date":"2026-05-13","rs":90.91,"mom":91.64},{"date":"2026-05-14","rs":89.89,"mom":89.52},{"date":"2026-05-15","rs":91.36,"mom":100.31}]},{"symbol":"CIPLA","name":"Cipla","sector":"Pharmaceuticals","close":1432.1,"rs":116.13,"mom":108.78,"quadrant":"LEADING","signal":"BUY","day_chg":-0.32,"trail":[{"date":"2026-05-04","rs":107.52,"mom":101.54},{"date":"2026-05-05","rs":107.68,"mom":102.43},{"date":"2026-05-06","rs":109.07,"mom":103.69},{"date":"2026-05-07","rs":108.47,"mom":103.0},{"date":"2026-05-08","rs":107.35,"mom":102.05},{"date":"2026-05-11","rs":104.48,"mom":96.96},{"date":"2026-05-12","rs":105.72,"mom":98.04},{"date":"2026-05-13","rs":109.46,"mom":100.39},{"date":"2026-05-14","rs":118.14,"mom":109.68},{"date":"2026-05-15","rs":116.13,"mom":108.78}]},{"symbol":"COALINDIA","name":"Coal India","sector":"Mining","close":462.2,"rs":103.76,"mom":101.84,"quadrant":"LEADING","signal":"BUY","day_chg":1.79,"trail":[{"date":"2026-05-04","rs":106.2,"mom":103.18},{"date":"2026-05-05","rs":105.18,"mom":99.71},{"date":"2026-05-06","rs":103.8,"mom":97.08},{"date":"2026-05-07","rs":103.16,"mom":95.88},{"date":"2026-05-08","rs":101.92,"mom":94.89},{"date":"2026-05-11","rs":104.13,"mom":97.93},{"date":"2026-05-12","rs":105.11,"mom":99.93},{"date":"2026-05-13","rs":104.73,"mom":100.92},{"date":"2026-05-14","rs":102.41,"mom":99.25},{"date":"2026-05-15","rs":103.76,"mom":101.84}]},{"symbol":"DRREDDY","name":"Dr Reddy's","sector":"Pharmaceuticals","close":1336.7,"rs":107.78,"mom":105.75,"quadrant":"LEADING","signal":"BUY","day_chg":2.54,"trail":[{"date":"2026-05-04","rs":102.24,"mom":95.47},{"date":"2026-05-05","rs":101.25,"mom":92.79},{"date":"2026-05-06","rs":102.98,"mom":97.31},{"date":"2026-05-07","rs":102.61,"mom":96.9},{"date":"2026-05-08","rs":102.03,"mom":96.51},{"date":"2026-05-11","rs":102.35,"mom":100.11},{"date":"2026-05-12","rs":103.42,"mom":102.17},{"date":"2026-05-13","rs":102.72,"mom":99.74},{"date":"2026-05-14","rs":104.69,"mom":102.08},{"date":"2026-05-15","rs":107.78,"mom":105.75}]},{"symbol":"EICHERMOT","name":"Eicher Motors","sector":"Automobile","close":7014.5,"rs":96.95,"mom":95.95,"quadrant":"LAGGING","signal":"AVOID","day_chg":-0.28,"trail":[{"date":"2026-05-04","rs":102.36,"mom":102.17},{"date":"2026-05-05","rs":102.21,"mom":103.37},{"date":"2026-05-06","rs":100.52,"mom":100.7},{"date":"2026-05-07","rs":100.73,"mom":101.53},{"date":"2026-05-08","rs":101.01,"mom":101.89},{"date":"2026-05-11","rs":101.06,"mom":98.7},{"date":"2026-05-12","rs":102.17,"mom":99.96},{"date":"2026-05-13","rs":98.16,"mom":97.64},{"date":"2026-05-14","rs":97.38,"mom":96.65},{"date":"2026-05-15","rs":96.95,"mom":95.95}]},{"symbol":"ETERNAL","name":"Eternal","sector":"Technology","close":241.18,"rs":99.46,"mom":97.11,"quadrant":"LAGGING","signal":"AVOID","day_chg":-1.89,"trail":[{"date":"2026-05-04","rs":100.75,"mom":98.81},{"date":"2026-05-05","rs":99.91,"mom":98.34},{"date":"2026-05-06","rs":101.55,"mom":100.25},{"date":"2026-05-07","rs":102.1,"mom":102.62},{"date":"2026-05-08","rs":102.36,"mom":102.9},{"date":"2026-05-11","rs":100.05,"mom":99.3},{"date":"2026-05-12","rs":99.64,"mom":99.73},{"date":"2026-05-13","rs":98.77,"mom":97.22},{"date":"2026-05-14","rs":100.95,"mom":98.84},{"date":"2026-05-15","rs":99.46,"mom":97.11}]},{"symbol":"GRASIM","name":"Grasim","sector":"Cement","close":2933.8,"rs":112.2,"mom":94.3,"quadrant":"WEAKENING","signal":"EXIT","day_chg":-0.17,"trail":[{"date":"2026-05-04","rs":115.02,"mom":106.39},{"date":"2026-05-05","rs":116.2,"mom":105.65},{"date":"2026-05-06","rs":115.43,"mom":105.41},{"date":"2026-05-07","rs":117.68,"mom":106.55},{"date":"2026-05-08","rs":117.91,"mom":107.33},{"date":"2026-05-11","rs":119.65,"mom":104.62},{"date":"2026-05-12","rs":115.91,"mom":99.71},{"date":"2026-05-13","rs":116.61,"mom":101.18},{"date":"2026-05-14","rs":113.02,"mom":95.34},{"date":"2026-05-15","rs":112.2,"mom":94.3}]},{"symbol":"HCLTECH","name":"HCL Technologies","sector":"IT","close":1132.6,"rs":90.93,"mom":99.67,"quadrant":"LAGGING","signal":"AVOID","day_chg":0.77,"trail":[{"date":"2026-05-04","rs":90.68,"mom":99.98},{"date":"2026-05-05","rs":91.03,"mom":101.22},{"date":"2026-05-06","rs":89.99,"mom":100.05},{"date":"2026-05-07","rs":89.94,"mom":99.4},{"date":"2026-05-08","rs":91.25,"mom":100.51},{"date":"2026-05-11","rs":92.25,"mom":101.57},{"date":"2026-05-12","rs":91.12,"mom":100.09},{"date":"2026-05-13","rs":91.23,"mom":101.24},{"date":"2026-05-14","rs":89.98,"mom":100.04},{"date":"2026-05-15","rs":90.93,"mom":99.67}]},{"symbol":"HDFCBANK","name":"HDFC Bank","sector":"Banking","close":767.5,"rs":94.73,"mom":101.46,"quadrant":"IMPROVING","signal":"WATCH","day_chg":-0.27,"trail":[{"date":"2026-05-04","rs":92.6,"mom":99.9},{"date":"2026-05-05","rs":92.27,"mom":99.88},{"date":"2026-05-06","rs":94.42,"mom":103.0},{"date":"2026-05-07","rs":94.52,"mom":102.97},{"date":"2026-05-08","rs":93.27,"mom":101.43},{"date":"2026-05-11","rs":92.67,"mom":100.07},{"date":"2026-05-12","rs":92.95,"mom":100.68},{"date":"2026-05-13","rs":92.86,"mom":98.44},{"date":"2026-05-14","rs":94.65,"mom":100.14},{"date":"2026-05-15","rs":94.73,"mom":101.46}]},{"symbol":"HDFCLIFE","name":"HDFC Life","sector":"Insurance","close":608.7,"rs":97.69,"mom":100.55,"quadrant":"IMPROVING","signal":"WATCH","day_chg":-0.63,"trail":[{"date":"2026-05-04","rs":91.88,"mom":100.19},{"date":"2026-05-05","rs":93.24,"mom":101.93},{"date":"2026-05-06","rs":94.11,"mom":102.51},{"date":"2026-05-07","rs":97.0,"mom":105.5},{"date":"2026-05-08","rs":97.13,"mom":105.32},{"date":"2026-05-11","rs":98.77,"mom":106.89},{"date":"2026-05-12","rs":97.42,"mom":104.18},{"date":"2026-05-13","rs":97.53,"mom":103.42},{"date":"2026-05-14","rs":98.02,"mom":101.02},{"date":"2026-05-15","rs":97.69,"mom":100.55}]},{"symbol":"HEROMOTOCO","name":"Hero MotoCorp","sector":"Automobile","close":5064.5,"rs":95.72,"mom":96.05,"quadrant":"LAGGING","signal":"AVOID","day_chg":-0.25,"trail":[{"date":"2026-05-04","rs":91.65,"mom":101.55},{"date":"2026-05-05","rs":93.76,"mom":101.8},{"date":"2026-05-06","rs":93.83,"mom":101.42},{"date":"2026-05-07","rs":99.25,"mom":106.01},{"date":"2026-05-08","rs":99.67,"mom":106.39},{"date":"2026-05-11","rs":99.31,"mom":107.66},{"date":"2026-05-12","rs":97.76,"mom":104.0},{"date":"2026-05-13","rs":94.84,"mom":101.01},{"date":"2026-05-14","rs":95.69,"mom":96.44},{"date":"2026-05-15","rs":95.72,"mom":96.05}]},{"symbol":"HINDALCO","name":"Hindalco","sector":"Metals","close":1067.5,"rs":108.07,"mom":101.59,"quadrant":"LEADING","signal":"BUY","day_chg":-3.24,"trail":[{"date":"2026-05-04","rs":107.53,"mom":96.08},{"date":"2026-05-05","rs":108.46,"mom":96.34},{"date":"2026-05-06","rs":106.56,"mom":96.31},{"date":"2026-05-07","rs":107.06,"mom":98.92},{"date":"2026-05-08","rs":106.48,"mom":98.65},{"date":"2026-05-11","rs":105.88,"mom":98.36},{"date":"2026-05-12","rs":108.34,"mom":99.87},{"date":"2026-05-13","rs":110.1,"mom":103.53},{"date":"2026-05-14","rs":110.75,"mom":103.69},{"date":"2026-05-15","rs":108.07,"mom":101.59}]},{"symbol":"HINDUNILVR","name":"Hindustan Unilever","sector":"FMCG","close":2272.2,"rs":107.02,"mom":102.02,"quadrant":"LEADING","signal":"BUY","day_chg":1.05,"trail":[{"date":"2026-05-04","rs":108.08,"mom":97.92},{"date":"2026-05-05","rs":110.06,"mom":102.82},{"date":"2026-05-06","rs":106.42,"mom":98.6},{"date":"2026-05-07","rs":102.48,"mom":98.79},{"date":"2026-05-08","rs":105.0,"mom":101.21},{"date":"2026-05-11","rs":109.4,"mom":101.33},{"date":"2026-05-12","rs":108.75,"mom":98.69},{"date":"2026-05-13","rs":108.68,"mom":102.26},{"date":"2026-05-14","rs":104.8,"mom":102.32},{"date":"2026-05-15","rs":107.02,"mom":102.02}]},{"symbol":"ICICIBANK","name":"ICICI Bank","sector":"Banking","close":1244.5,"rs":92.58,"mom":102.81,"quadrant":"IMPROVING","signal":"WATCH","day_chg":-0.12,"trail":[{"date":"2026-05-04","rs":89.76,"mom":89.65},{"date":"2026-05-05","rs":87.16,"mom":91.58},{"date":"2026-05-06","rs":90.3,"mom":100.17},{"date":"2026-05-07","rs":90.62,"mom":102.12},{"date":"2026-05-08","rs":89.77,"mom":100.71},{"date":"2026-05-11","rs":94.23,"mom":104.47},{"date":"2026-05-12","rs":93.81,"mom":106.65},{"date":"2026-05-13","rs":92.73,"mom":102.43},{"date":"2026-05-14","rs":92.14,"mom":101.53},{"date":"2026-05-15","rs":92.58,"mom":102.81}]},{"symbol":"INDUSINDBK","name":"IndusInd Bank","sector":"Banking","close":886.4,"rs":104.09,"mom":92.35,"quadrant":"WEAKENING","signal":"EXIT","day_chg":-2.37,"trail":[{"date":"2026-05-04","rs":108.46,"mom":100.52},{"date":"2026-05-05","rs":108.14,"mom":102.51},{"date":"2026-05-06","rs":111.56,"mom":102.16},{"date":"2026-05-07","rs":111.0,"mom":100.44},{"date":"2026-05-08","rs":111.73,"mom":101.7},{"date":"2026-05-11","rs":109.15,"mom":100.68},{"date":"2026-05-12","rs":107.01,"mom":98.88},{"date":"2026-05-13","rs":106.55,"mom":94.98},{"date":"2026-05-14","rs":107.0,"mom":96.0},{"date":"2026-05-15","rs":104.09,"mom":92.35}]},{"symbol":"INFY","name":"Infosys","sector":"IT","close":1119.0,"rs":91.13,"mom":98.69,"quadrant":"LAGGING","signal":"AVOID","day_chg":2.19,"trail":[{"date":"2026-05-04","rs":92.34,"mom":100.07},{"date":"2026-05-05","rs":93.06,"mom":101.22},{"date":"2026-05-06","rs":91.57,"mom":99.31},{"date":"2026-05-07","rs":91.14,"mom":97.78},{"date":"2026-05-08","rs":92.44,"mom":99.1},{"date":"2026-05-11","rs":93.64,"mom":101.3},{"date":"2026-05-12","rs":92.68,"mom":99.62},{"date":"2026-05-13","rs":91.51,"mom":99.94},{"date":"2026-05-14","rs":88.94,"mom":97.8},{"date":"2026-05-15","rs":91.13,"mom":98.69}]},{"symbol":"ITC","name":"ITC","sector":"FMCG","close":309.45,"rs":108.14,"mom":107.76,"quadrant":"LEADING","signal":"BUY","day_chg":0.73,"trail":[{"date":"2026-05-04","rs":104.57,"mom":105.9},{"date":"2026-05-05","rs":105.69,"mom":105.19},{"date":"2026-05-06","rs":101.65,"mom":92.34},{"date":"2026-05-07","rs":98.8,"mom":88.85},{"date":"2026-05-08","rs":100.38,"mom":90.89},{"date":"2026-05-11","rs":102.99,"mom":98.42},{"date":"2026-05-12","rs":103.36,"mom":97.67},{"date":"2026-05-13","rs":106.57,"mom":104.91},{"date":"2026-05-14","rs":105.54,"mom":106.74},{"date":"2026-05-15","rs":108.14,"mom":107.76}]},{"symbol":"JIOFIN","name":"Jio Financial","sector":"Financial Services","close":233.06,"rs":93.92,"mom":90.55,"quadrant":"LAGGING","signal":"AVOID","day_chg":-0.46,"trail":[{"date":"2026-05-04","rs":107.44,"mom":98.51},{"date":"2026-05-05","rs":104.2,"mom":96.95},{"date":"2026-05-06","rs":104.88,"mom":99.49},{"date":"2026-05-07","rs":103.52,"mom":100.54},{"date":"2026-05-08","rs":103.37,"mom":100.43},{"date":"2026-05-11","rs":98.48,"mom":91.04},{"date":"2026-05-12","rs":93.38,"mom":89.18},{"date":"2026-05-13","rs":94.2,"mom":89.32},{"date":"2026-05-14","rs":94.33,"mom":90.81},{"date":"2026-05-15","rs":93.92,"mom":90.55}]},{"symbol":"JSWSTEEL","name":"JSW Steel","sector":"Metals","close":1278.8,"rs":109.78,"mom":101.29,"quadrant":"LEADING","signal":"BUY","day_chg":-1.4,"trail":[{"date":"2026-05-04","rs":108.56,"mom":95.19},{"date":"2026-05-05","rs":107.0,"mom":93.79},{"date":"2026-05-06","rs":107.44,"mom":96.36},{"date":"2026-05-07","rs":108.49,"mom":98.52},{"date":"2026-05-08","rs":108.49,"mom":98.98},{"date":"2026-05-11","rs":108.69,"mom":100.13},{"date":"2026-05-12","rs":109.94,"mom":102.95},{"date":"2026-05-13","rs":111.96,"mom":104.52},{"date":"2026-05-14","rs":112.09,"mom":103.61},{"date":"2026-05-15","rs":109.78,"mom":101.29}]},{"symbol":"KOTAKBANK","name":"Kotak Mahindra Bank","sector":"Banking","close":387.05,"rs":104.72,"mom":107.93,"quadrant":"LEADING","signal":"BUY","day_chg":1.0,"trail":[{"date":"2026-05-04","rs":91.76,"mom":97.55},{"date":"2026-05-05","rs":92.6,"mom":96.9},{"date":"2026-05-06","rs":93.16,"mom":96.74},{"date":"2026-05-07","rs":94.79,"mom":96.05},{"date":"2026-05-08","rs":96.79,"mom":98.0},{"date":"2026-05-11","rs":99.86,"mom":108.1},{"date":"2026-05-12","rs":100.85,"mom":108.25},{"date":"2026-05-13","rs":101.51,"mom":108.35},{"date":"2026-05-14","rs":102.19,"mom":107.4},{"date":"2026-05-15","rs":104.72,"mom":107.93}]},{"symbol":"LT","name":"Larsen & Toubro","sector":"Infrastructure","close":3909.0,"rs":101.86,"mom":100.32,"quadrant":"LEADING","signal":"BUY","day_chg":-0.8,"trail":[{"date":"2026-05-04","rs":106.37,"mom":100.61},{"date":"2026-05-05","rs":105.18,"mom":99.57},{"date":"2026-05-06","rs":102.01,"mom":95.74},{"date":"2026-05-07","rs":102.4,"mom":97.84},{"date":"2026-05-08","rs":101.55,"mom":97.13},{"date":"2026-05-11","rs":102.29,"mom":95.92},{"date":"2026-05-12","rs":101.82,"mom":96.64},{"date":"2026-05-13","rs":103.53,"mom":101.52},{"date":"2026-05-14","rs":102.72,"mom":100.32},{"date":"2026-05-15","rs":101.86,"mom":100.32}]},{"symbol":"M&M","name":"Mahindra & Mahindra","sector":"Automobile","close":3123.1,"rs":98.09,"mom":92.52,"quadrant":"LAGGING","signal":"AVOID","day_chg":-1.6,"trail":[{"date":"2026-05-04","rs":93.14,"mom":100.93},{"date":"2026-05-05","rs":99.84,"mom":107.52},{"date":"2026-05-06","rs":102.71,"mom":107.96},{"date":"2026-05-07","rs":106.72,"mom":113.66},{"date":"2026-05-08","rs":105.57,"mom":112.28},{"date":"2026-05-11","rs":103.63,"mom":110.49},{"date":"2026-05-12","rs":103.14,"mom":103.3},{"date":"2026-05-13","rs":99.08,"mom":96.37},{"date":"2026-05-14","rs":100.78,"mom":94.06},{"date":"2026-05-15","rs":98.09,"mom":92.52}]},{"symbol":"MARUTI","name":"Maruti Suzuki","sector":"Automobile","close":13221.0,"rs":98.85,"mom":98.08,"quadrant":"LAGGING","signal":"AVOID","day_chg":1.12,"trail":[{"date":"2026-05-04","rs":99.29,"mom":104.27},{"date":"2026-05-05","rs":98.12,"mom":105.73},{"date":"2026-05-06","rs":99.66,"mom":104.57},{"date":"2026-05-07","rs":100.27,"mom":103.45},{"date":"2026-05-08","rs":100.77,"mom":103.84},{"date":"2026-05-11","rs":100.41,"mom":101.12},{"date":"2026-05-12","rs":99.74,"mom":101.61},{"date":"2026-05-13","rs":98.76,"mom":99.11},{"date":"2026-05-14","rs":96.65,"mom":96.38},{"date":"2026-05-15","rs":98.85,"mom":98.08}]},{"symbol":"NESTLEIND","name":"Nestle India","sector":"FMCG","close":1430.5,"rs":107.42,"mom":96.45,"quadrant":"WEAKENING","signal":"EXIT","day_chg":-1.99,"trail":[{"date":"2026-05-04","rs":112.72,"mom":95.27},{"date":"2026-05-05","rs":113.39,"mom":95.51},{"date":"2026-05-06","rs":111.94,"mom":94.91},{"date":"2026-05-07","rs":110.73,"mom":95.08},{"date":"2026-05-08","rs":110.98,"mom":96.66},{"date":"2026-05-11","rs":111.48,"mom":98.76},{"date":"2026-05-12","rs":111.52,"mom":98.13},{"date":"2026-05-13","rs":110.79,"mom":98.85},{"date":"2026-05-14","rs":109.02,"mom":98.29},{"date":"2026-05-15","rs":107.42,"mom":96.45}]},{"symbol":"NTPC","name":"NTPC","sector":"Power","close":395.25,"rs":104.94,"mom":99.84,"quadrant":"WEAKENING","signal":"EXIT","day_chg":-0.26,"trail":[{"date":"2026-05-04","rs":105.31,"mom":97.1},{"date":"2026-05-05","rs":105.17,"mom":97.51},{"date":"2026-05-06","rs":103.18,"mom":97.39},{"date":"2026-05-07","rs":104.26,"mom":98.44},{"date":"2026-05-08","rs":105.09,"mom":99.41},{"date":"2026-05-11","rs":104.22,"mom":98.91},{"date":"2026-05-12","rs":105.73,"mom":100.56},{"date":"2026-05-13","rs":104.92,"mom":101.74},{"date":"2026-05-14","rs":105.12,"mom":100.85},{"date":"2026-05-15","rs":104.94,"mom":99.84}]},{"symbol":"ONGC","name":"ONGC","sector":"Oil & Gas","close":299.35,"rs":107.82,"mom":107.26,"quadrant":"LEADING","signal":"BUY","day_chg":-0.52,"trail":[{"date":"2026-05-04","rs":105.22,"mom":100.78},{"date":"2026-05-05","rs":104.53,"mom":95.78},{"date":"2026-05-06","rs":100.81,"mom":92.84},{"date":"2026-05-07","rs":101.59,"mom":93.68},{"date":"2026-05-08","rs":100.56,"mom":92.83},{"date":"2026-05-11","rs":102.3,"mom":97.08},{"date":"2026-05-12","rs":108.08,"mom":103.56},{"date":"2026-05-13","rs":108.51,"mom":107.7},{"date":"2026-05-14","rs":108.36,"mom":106.77},{"date":"2026-05-15","rs":107.82,"mom":107.26}]},{"symbol":"POWERGRID","name":"Power Grid","sector":"Power","close":305.85,"rs":102.77,"mom":99.03,"quadrant":"WEAKENING","signal":"EXIT","day_chg":1.36,"trail":[{"date":"2026-05-04","rs":105.58,"mom":99.02},{"date":"2026-05-05","rs":105.94,"mom":99.64},{"date":"2026-05-06","rs":103.93,"mom":98.0},{"date":"2026-05-07","rs":103.23,"mom":97.3},{"date":"2026-05-08","rs":103.75,"mom":97.87},{"date":"2026-05-11","rs":104.13,"mom":98.55},{"date":"2026-05-12","rs":104.37,"mom":98.43},{"date":"2026-05-13","rs":102.51,"mom":98.58},{"date":"2026-05-14","rs":101.26,"mom":98.02},{"date":"2026-05-15","rs":102.77,"mom":99.03}]},{"symbol":"RELIANCE","name":"Reliance Industries","sector":"Oil & Gas","close":1336.4,"rs":97.49,"mom":92.91,"quadrant":"LAGGING","signal":"AVOID","day_chg":-1.87,"trail":[{"date":"2026-05-04","rs":108.45,"mom":108.88},{"date":"2026-05-05","rs":108.67,"mom":106.2},{"date":"2026-05-06","rs":104.22,"mom":99.21},{"date":"2026-05-07","rs":103.94,"mom":97.49},{"date":"2026-05-08","rs":104.58,"mom":98.34},{"date":"2026-05-11","rs":101.93,"mom":93.49},{"date":"2026-05-12","rs":101.99,"mom":93.31},{"date":"2026-05-13","rs":101.2,"mom":96.98},{"date":"2026-05-14","rs":99.83,"mom":95.88},{"date":"2026-05-15","rs":97.49,"mom":92.91}]},{"symbol":"SBILIFE","name":"SBI Life","sector":"Insurance","close":1864.5,"rs":98.83,"mom":103.13,"quadrant":"IMPROVING","signal":"WATCH","day_chg":-0.12,"trail":[{"date":"2026-05-04","rs":90.5,"mom":103.24},{"date":"2026-05-05","rs":91.54,"mom":103.48},{"date":"2026-05-06","rs":93.19,"mom":104.99},{"date":"2026-05-07","rs":94.61,"mom":104.19},{"date":"2026-05-08","rs":95.7,"mom":104.85},{"date":"2026-05-11","rs":99.51,"mom":109.01},{"date":"2026-05-12","rs":97.98,"mom":106.44},{"date":"2026-05-13","rs":98.04,"mom":104.86},{"date":"2026-05-14","rs":98.73,"mom":104.13},{"date":"2026-05-15","rs":98.83,"mom":103.13}]},{"symbol":"SBIN","name":"State Bank of India","sector":"Banking","close":963.2,"rs":86.83,"mom":97.44,"quadrant":"LAGGING","signal":"AVOID","day_chg":-1.7,"trail":[{"date":"2026-05-04","rs":97.28,"mom":94.35},{"date":"2026-05-05","rs":96.53,"mom":95.41},{"date":"2026-05-06","rs":99.2,"mom":99.59},{"date":"2026-05-07","rs":98.45,"mom":100.18},{"date":"2026-05-08","rs":89.39,"mom":91.29},{"date":"2026-05-11","rs":85.44,"mom":88.15},{"date":"2026-05-12","rs":88.11,"mom":91.58},{"date":"2026-05-13","rs":87.32,"mom":88.12},{"date":"2026-05-14","rs":87.83,"mom":89.38},{"date":"2026-05-15","rs":86.83,"mom":97.44}]},{"symbol":"SHRIRAMFIN","name":"Shriram Finance","sector":"Financial Services","close":937.9,"rs":93.74,"mom":92.46,"quadrant":"LAGGING","signal":"AVOID","day_chg":0.3,"trail":[{"date":"2026-05-04","rs":95.25,"mom":97.99},{"date":"2026-05-05","rs":96.3,"mom":101.65},{"date":"2026-05-06","rs":100.13,"mom":105.98},{"date":"2026-05-07","rs":101.64,"mom":109.15},{"date":"2026-05-08","rs":101.28,"mom":108.67},{"date":"2026-05-11","rs":98.57,"mom":103.32},{"date":"2026-05-12","rs":93.99,"mom":97.68},{"date":"2026-05-13","rs":92.1,"mom":91.97},{"date":"2026-05-14","rs":92.91,"mom":91.26},{"date":"2026-05-15","rs":93.74,"mom":92.46}]},{"symbol":"SUNPHARMA","name":"Sun Pharma","sector":"Pharmaceuticals","close":1878.2,"rs":107.99,"mom":102.39,"quadrant":"LEADING","signal":"BUY","day_chg":0.81,"trail":[{"date":"2026-05-04","rs":105.15,"mom":103.34},{"date":"2026-05-05","rs":105.22,"mom":102.57},{"date":"2026-05-06","rs":105.42,"mom":102.07},{"date":"2026-05-07","rs":104.52,"mom":99.35},{"date":"2026-05-08","rs":105.59,"mom":100.58},{"date":"2026-05-11","rs":107.98,"mom":102.82},{"date":"2026-05-12","rs":108.06,"mom":102.85},{"date":"2026-05-13","rs":106.66,"mom":101.24},{"date":"2026-05-14","rs":107.29,"mom":102.76},{"date":"2026-05-15","rs":107.99,"mom":102.39}]},{"symbol":"TATACONSUM","name":"Tata Consumer","sector":"FMCG","close":1234.0,"rs":112.78,"mom":102.0,"quadrant":"LEADING","signal":"BUY","day_chg":0.46,"trail":[{"date":"2026-05-04","rs":109.89,"mom":97.57},{"date":"2026-05-05","rs":109.12,"mom":98.89},{"date":"2026-05-06","rs":106.21,"mom":94.4},{"date":"2026-05-07","rs":105.96,"mom":97.22},{"date":"2026-05-08","rs":110.78,"mom":102.17},{"date":"2026-05-11","rs":123.49,"mom":113.6},{"date":"2026-05-12","rs":120.37,"mom":111.25},{"date":"2026-05-13","rs":116.16,"mom":109.95},{"date":"2026-05-14","rs":112.89,"mom":106.93},{"date":"2026-05-15","rs":112.78,"mom":102.0}]},{"symbol":"TATASTEEL","name":"Tata Steel","sector":"Metals","close":216.84,"rs":109.29,"mom":102.37,"quadrant":"LEADING","signal":"BUY","day_chg":-1.94,"trail":[{"date":"2026-05-04","rs":106.59,"mom":98.28},{"date":"2026-05-05","rs":106.29,"mom":96.81},{"date":"2026-05-06","rs":106.94,"mom":98.14},{"date":"2026-05-07","rs":107.72,"mom":100.64},{"date":"2026-05-08","rs":106.92,"mom":100.04},{"date":"2026-05-11","rs":107.28,"mom":100.68},{"date":"2026-05-12","rs":109.35,"mom":103.06},{"date":"2026-05-13","rs":113.22,"mom":106.27},{"date":"2026-05-14","rs":111.96,"mom":104.25},{"date":"2026-05-15","rs":109.29,"mom":102.37}]},{"symbol":"TCS","name":"TCS","sector":"IT","close":2264.0,"rs":87.17,"mom":95.11,"quadrant":"LAGGING","signal":"AVOID","day_chg":0.8,"trail":[{"date":"2026-05-04","rs":94.98,"mom":99.57},{"date":"2026-05-05","rs":95.15,"mom":99.44},{"date":"2026-05-06","rs":94.27,"mom":98.14},{"date":"2026-05-07","rs":92.45,"mom":95.72},{"date":"2026-05-08","rs":92.06,"mom":95.25},{"date":"2026-05-11","rs":93.88,"mom":98.9},{"date":"2026-05-12","rs":90.81,"mom":95.66},{"date":"2026-05-13","rs":88.92,"mom":94.65},{"date":"2026-05-14","rs":85.84,"mom":93.39},{"date":"2026-05-15","rs":87.17,"mom":95.11}]},{"symbol":"TECHM","name":"Tech Mahindra","sector":"IT","close":1370.5,"rs":98.22,"mom":96.24,"quadrant":"LAGGING","signal":"AVOID","day_chg":2.02,"trail":[{"date":"2026-05-04","rs":101.55,"mom":104.39},{"date":"2026-05-05","rs":101.02,"mom":102.91},{"date":"2026-05-06","rs":101.06,"mom":100.87},{"date":"2026-05-07","rs":100.18,"mom":98.61},{"date":"2026-05-08","rs":101.98,"mom":100.19},{"date":"2026-05-11","rs":103.23,"mom":101.68},{"date":"2026-05-12","rs":100.64,"mom":99.62},{"date":"2026-05-13","rs":99.29,"mom":98.22},{"date":"2026-05-14","rs":95.89,"mom":95.71},{"date":"2026-05-15","rs":98.22,"mom":96.24}]},{"symbol":"TITAN","name":"Titan","sector":"Consumer Goods","close":4169.1,"rs":99.93,"mom":93.1,"quadrant":"LAGGING","signal":"AVOID","day_chg":0.82,"trail":[{"date":"2026-05-04","rs":103.86,"mom":97.34},{"date":"2026-05-05","rs":104.35,"mom":98.2},{"date":"2026-05-06","rs":102.64,"mom":96.89},{"date":"2026-05-07","rs":101.27,"mom":96.16},{"date":"2026-05-08","rs":106.83,"mom":101.86},{"date":"2026-05-11","rs":100.59,"mom":96.73},{"date":"2026-05-12","rs":98.42,"mom":94.06},{"date":"2026-05-13","rs":99.08,"mom":96.43},{"date":"2026-05-14","rs":98.84,"mom":97.56},{"date":"2026-05-15","rs":99.93,"mom":93.1}]},{"symbol":"TRENT","name":"Trent","sector":"Retail","close":4101.3,"rs":105.2,"mom":98.08,"quadrant":"WEAKENING","signal":"EXIT","day_chg":-0.75,"trail":[{"date":"2026-05-04","rs":106.54,"mom":95.91},{"date":"2026-05-05","rs":106.15,"mom":95.82},{"date":"2026-05-06","rs":108.08,"mom":99.46},{"date":"2026-05-07","rs":107.91,"mom":100.73},{"date":"2026-05-08","rs":107.13,"mom":100.2},{"date":"2026-05-11","rs":106.92,"mom":100.38},{"date":"2026-05-12","rs":105.58,"mom":99.43},{"date":"2026-05-13","rs":106.0,"mom":97.92},{"date":"2026-05-14","rs":105.83,"mom":97.92},{"date":"2026-05-15","rs":105.2,"mom":98.08}]},{"symbol":"ULTRACEMCO","name":"UltraTech Cement","sector":"Cement","close":11487.0,"rs":98.83,"mom":97.01,"quadrant":"LAGGING","signal":"AVOID","day_chg":-1.75,"trail":[{"date":"2026-05-04","rs":99.27,"mom":96.17},{"date":"2026-05-05","rs":103.12,"mom":102.26},{"date":"2026-05-06","rs":102.87,"mom":103.14},{"date":"2026-05-07","rs":103.72,"mom":106.36},{"date":"2026-05-08","rs":101.82,"mom":104.37},{"date":"2026-05-11","rs":103.28,"mom":104.01},{"date":"2026-05-12","rs":101.2,"mom":98.09},{"date":"2026-05-13","rs":101.86,"mom":98.99},{"date":"2026-05-14","rs":101.66,"mom":97.94},{"date":"2026-05-15","rs":98.83,"mom":97.01}]},{"symbol":"WIPRO","name":"Wipro","sector":"IT","close":190.0,"rs":94.23,"mom":97.48,"quadrant":"LAGGING","signal":"AVOID","day_chg":0.9,"trail":[{"date":"2026-05-04","rs":98.35,"mom":98.64},{"date":"2026-05-05","rs":98.36,"mom":99.68},{"date":"2026-05-06","rs":96.69,"mom":98.99},{"date":"2026-05-07","rs":95.56,"mom":97.02},{"date":"2026-05-08","rs":96.75,"mom":98.07},{"date":"2026-05-11","rs":98.16,"mom":99.81},{"date":"2026-05-12","rs":95.41,"mom":97.05},{"date":"2026-05-13","rs":93.74,"mom":97.06},{"date":"2026-05-14","rs":92.36,"mom":96.8},{"date":"2026-05-15","rs":94.23,"mom":97.48}]}],"history":{"ADANIENT":["IMPROVING","IMPROVING","IMPROVING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","WEAKENING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","WEAKENING","WEAKENING","LEADING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","LEADING","LEADING"],"ADANIPORTS":["LEADING","LEADING","LEADING","LEADING","WEAKENING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","WEAKENING","LEADING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING"],"APOLLOHOSP":["WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","LEADING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","LEADING","LEADING","LEADING","LEADING","LEADING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING"],"ASIANPAINT":["LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","WEAKENING"],"AXISBANK":["LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","LEADING","LEADING","LEADING","WEAKENING","WEAKENING","WEAKENING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","IMPROVING","LAGGING","IMPROVING","LEADING","IMPROVING","LAGGING","IMPROVING"],"BAJAJ-AUTO":["WEAKENING","WEAKENING","LEADING","WEAKENING","LEADING","LEADING","LEADING","LEADING","LEADING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","WEAKENING","WEAKENING","WEAKENING"],"BAJAJFINSV":["LAGGING","LAGGING","LAGGING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","LAGGING","LAGGING","LAGGING"],"BAJFINANCE":["LAGGING","LAGGING","IMPROVING","LEADING","LEADING","LEADING","IMPROVING","IMPROVING","LAGGING","LAGGING","LAGGING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","WEAKENING","WEAKENING","LAGGING","WEAKENING","WEAKENING"],"BEL":["LEADING","LEADING","LEADING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","LEADING","LEADING","LEADING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","LAGGING","LAGGING","LAGGING","WEAKENING","LAGGING","LEADING","LEADING","LEADING","LAGGING","LEADING","LAGGING","LAGGING"],"BHARTIARTL":["LEADING","LAGGING","WEAKENING","LAGGING","WEAKENING","LAGGING","LEADING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","LEADING","LEADING","LEADING","IMPROVING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","IMPROVING","IMPROVING","LEADING","LEADING"],"BPCL":["IMPROVING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","IMPROVING","IMPROVING","IMPROVING","LAGGING","IMPROVING","LAGGING","LAGGING","LAGGING"],"BRITANNIA":["WEAKENING","WEAKENING","WEAKENING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","IMPROVING","IMPROVING","LEADING","IMPROVING","IMPROVING","LEADING","IMPROVING","LAGGING","IMPROVING","LEADING","WEAKENING","LEADING","LEADING","IMPROVING","WEAKENING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","IMPROVING"],"CIPLA":["LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","IMPROVING","LAGGING","LAGGING","LAGGING","IMPROVING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","WEAKENING","WEAKENING","LEADING","LEADING","LEADING"],"COALINDIA":["LEADING","LEADING","LEADING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","LEADING","WEAKENING","LEADING"],"DRREDDY":["WEAKENING","WEAKENING","WEAKENING","LAGGING","WEAKENING","WEAKENING","WEAKENING","LAGGING","IMPROVING","LAGGING","LAGGING","LAGGING","LAGGING","LEADING","LEADING","LEADING","LEADING","LEADING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","LEADING","LEADING","WEAKENING","LEADING","LEADING"],"EICHERMOT":["LAGGING","LAGGING","LAGGING","LEADING","WEAKENING","LEADING","IMPROVING","IMPROVING","LAGGING","LAGGING","WEAKENING","LAGGING","IMPROVING","LAGGING","LEADING","WEAKENING","LAGGING","LAGGING","IMPROVING","LAGGING","LEADING","LEADING","LEADING","LEADING","LEADING","WEAKENING","WEAKENING","LAGGING","LAGGING","LAGGING"],"ETERNAL":["LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","IMPROVING","LEADING","IMPROVING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","WEAKENING","LAGGING","LAGGING","WEAKENING","LAGGING","LEADING","LEADING","LEADING","WEAKENING","LAGGING","LAGGING","WEAKENING","LAGGING"],"GRASIM":["LEADING","WEAKENING","WEAKENING","WEAKENING","LEADING","LEADING","WEAKENING","WEAKENING","WEAKENING","LAGGING","WEAKENING","WEAKENING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","WEAKENING","LEADING","WEAKENING","WEAKENING"],"HCLTECH":["LEADING","LEADING","LEADING","LEADING","LEADING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","IMPROVING","LAGGING","IMPROVING","IMPROVING","LAGGING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","LAGGING"],"HDFCBANK":["IMPROVING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","LAGGING","LAGGING","LAGGING","IMPROVING","LAGGING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","LAGGING","IMPROVING","LAGGING","LAGGING","LAGGING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","LAGGING","IMPROVING","IMPROVING"],"HDFCLIFE":["LAGGING","LAGGING","LAGGING","LAGGING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","LAGGING","LAGGING","LAGGING","LAGGING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","IMPROVING"],"HEROMOTOCO":["LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","LEADING","LAGGING","IMPROVING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","LAGGING","LAGGING"],"HINDALCO":["LEADING","LEADING","LEADING","WEAKENING","LEADING","LEADING","WEAKENING","WEAKENING","LEADING","LEADING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","LEADING","LEADING","LEADING","LEADING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","LEADING","LEADING","LEADING"],"HINDUNILVR":["LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","LEADING","IMPROVING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","LEADING","WEAKENING","WEAKENING","LEADING","LEADING","WEAKENING","LEADING","LEADING","LEADING"],"ICICIBANK":["LAGGING","LAGGING","LAGGING","LEADING","LAGGING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","WEAKENING","LEADING","WEAKENING","LEADING","WEAKENING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","IMPROVING"],"INDUSINDBK":["LAGGING","LAGGING","LAGGING","IMPROVING","LAGGING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","WEAKENING","WEAKENING","WEAKENING","WEAKENING"],"INFY":["IMPROVING","IMPROVING","LEADING","IMPROVING","IMPROVING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","IMPROVING","IMPROVING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","IMPROVING","IMPROVING","IMPROVING","LAGGING","LAGGING","LAGGING","IMPROVING","LAGGING","LAGGING","LAGGING","LAGGING"],"ITC":["LEADING","LEADING","LEADING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","WEAKENING","LAGGING","WEAKENING","WEAKENING","WEAKENING","LEADING","LEADING","LEADING"],"JIOFIN":["IMPROVING","IMPROVING","IMPROVING","IMPROVING","LAGGING","IMPROVING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","LEADING","LEADING","LEADING","LEADING","LEADING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","LEADING","LEADING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING"],"JSWSTEEL":["LEADING","WEAKENING","LEADING","WEAKENING","LEADING","LEADING","LEADING","LEADING","LEADING","WEAKENING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","LEADING","LEADING","LEADING","LEADING","LEADING"],"KOTAKBANK":["LAGGING","LAGGING","LAGGING","IMPROVING","IMPROVING","LAGGING","IMPROVING","IMPROVING","LAGGING","IMPROVING","IMPROVING","IMPROVING","LAGGING","LAGGING","LAGGING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","IMPROVING","LEADING","LEADING","LEADING","LEADING"],"LT":["LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","LEADING","LEADING","LEADING","WEAKENING","WEAKENING","LEADING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","LEADING","LEADING","LEADING"],"M&M":["IMPROVING","LAGGING","LAGGING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","LEADING","LEADING","LEADING","LEADING","LEADING","LAGGING","WEAKENING","LAGGING"],"MARUTI":["IMPROVING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","IMPROVING","IMPROVING","LAGGING","LAGGING","LAGGING","LAGGING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","LEADING","LEADING","LEADING","IMPROVING","LAGGING","LAGGING","LAGGING"],"NESTLEIND":["LEADING","LEADING","LEADING","LAGGING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING"],"NTPC":["WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","LEADING","LEADING","LEADING","LEADING","LEADING","WEAKENING","LEADING","LEADING","LEADING","LEADING","LEADING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","LEADING","LEADING","LEADING","WEAKENING"],"ONGC":["LEADING","LEADING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","LEADING","LEADING","LEADING","LEADING"],"POWERGRID":["WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING"],"RELIANCE":["WEAKENING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","IMPROVING","LAGGING","IMPROVING","IMPROVING","IMPROVING","LAGGING","IMPROVING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","LAGGING","LAGGING"],"SBILIFE":["LAGGING","IMPROVING","LAGGING","LAGGING","IMPROVING","IMPROVING","LEADING","LEADING","LEADING","LEADING","LEADING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","IMPROVING"],"SBIN":["WEAKENING","WEAKENING","WEAKENING","WEAKENING","LAGGING","WEAKENING","WEAKENING","LAGGING","LAGGING","IMPROVING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","WEAKENING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","IMPROVING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING"],"SHRIRAMFIN":["LAGGING","LAGGING","IMPROVING","LEADING","LEADING","LEADING","LEADING","LEADING","WEAKENING","LEADING","WEAKENING","LEADING","LEADING","WEAKENING","WEAKENING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","IMPROVING","LEADING","LEADING","LEADING","IMPROVING","LAGGING","LAGGING","LAGGING","LAGGING"],"SUNPHARMA":["WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","LAGGING","LAGGING","WEAKENING","WEAKENING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","WEAKENING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING"],"TATACONSUM":["WEAKENING","LEADING","WEAKENING","LAGGING","IMPROVING","LAGGING","WEAKENING","LAGGING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING"],"TATASTEEL":["LEADING","LEADING","LEADING","WEAKENING","WEAKENING","WEAKENING","LEADING","WEAKENING","LEADING","LEADING","LEADING","WEAKENING","LEADING","WEAKENING","LEADING","LEADING","LEADING","LEADING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING"],"TCS":["IMPROVING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","LAGGING","LAGGING","LAGGING","IMPROVING","LAGGING","IMPROVING","IMPROVING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","IMPROVING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING"],"TECHM":["LEADING","LEADING","LEADING","LAGGING","WEAKENING","LAGGING","LAGGING","WEAKENING","LEADING","LEADING","LEADING","LEADING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","WEAKENING","LEADING","LEADING","WEAKENING","LAGGING","LAGGING","LAGGING"],"TITAN":["LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","LEADING","WEAKENING","LAGGING","LAGGING","LAGGING","LAGGING"],"TRENT":["LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","WEAKENING","WEAKENING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","WEAKENING","LEADING","LEADING","LEADING","WEAKENING","WEAKENING","WEAKENING","WEAKENING"],"ULTRACEMCO":["LAGGING","LAGGING","LAGGING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","LEADING","IMPROVING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","LEADING","LAGGING","LAGGING","LAGGING","LAGGING","LEADING","LEADING","LEADING","LEADING","LEADING","WEAKENING","WEAKENING","WEAKENING","LAGGING"],"WIPRO":["IMPROVING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","IMPROVING","LAGGING","IMPROVING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","IMPROVING","IMPROVING","IMPROVING","LAGGING","IMPROVING","IMPROVING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING","LAGGING"]},"fetched_ok":true,"generated_at":"2026-05-28 15:58:27"};
+const QMAP={LEADING:{c:'lead',cls:'l',k:'L'},WEAKENING:{c:'weak',cls:'w',k:'W'},IMPROVING:{c:'impr',cls:'i',k:'I'},LAGGING:{c:'lag',cls:'g',k:'G'}};
+const QCOL={LEADING:'#16c784',WEAKENING:'#f7a600',IMPROVING:'#4d9fff',LAGGING:'#ed5565'};
+let DATA=SEED, sortKey='mom', sortDir=-1, filterQ='ALL', searchTxt='';
+
+async function load(){
+  try{
+    const r=await fetch('dashboard_data.json',{cache:'no-store'});
+    if(r.ok){DATA=await r.json();
+      document.getElementById('feed').innerHTML='<span class="dot"></span>'+(DATA.fetched_ok?'LIVE':'CACHE');
+    }
+  }catch(e){/* file:// or missing -> keep SEED */}
+  render();
+}
+
+function render(){
+  document.getElementById('asof').textContent=DATA.as_of;
+  document.getElementById('ndays').textContent=DATA.n_days+'d';
+  document.getElementById('gen').textContent=DATA.generated_at||'—';
+  const counts={LEADING:0,WEAKENING:0,IMPROVING:0,LAGGING:0};
+  DATA.stocks.forEach(s=>counts[s.quadrant]++);
+  const tot=DATA.stocks.length;
+  document.getElementById('counts').innerHTML=
+    `<span class="qc l">${counts.LEADING} L</span><span class="qc i">${counts.IMPROVING} I</span>`+
+    `<span class="qc w">${counts.WEAKENING} W</span><span class="qc g">${counts.LAGGING} La</span>`;
+  // census
+  const order=[['LEADING','BUY'],['IMPROVING','WATCH'],['WEAKENING','EXIT'],['LAGGING','AVOID']];
+  document.getElementById('census').innerHTML=order.map(([q,a])=>{
+    const m=QMAP[q],pct=(counts[q]/tot*100).toFixed(0);
+    return `<div class="qbig ${m.cls}" onclick="setFilter('${q}')">
+      <div><div class="lbl">${q}</div><div class="act">${a}</div></div>
+      <div class="num">${counts[q]}</div>
+      <div class="pct">${pct}%</div></div>`;
+  }).join('');
+  drawRRG();
+  drawTable();
+}
+
+function drawRRG(){
+  const svg=document.getElementById('rrg');
+  const W=600,H=480,pad=44;
+  // dynamic bounds around 100
+  let all=DATA.stocks;
+  let rsv=all.map(s=>s.rs),mv=all.map(s=>s.mom);
+  let rmin=Math.min(...rsv,98),rmax=Math.max(...rsv,102);
+  let mmin=Math.min(...mv,98),mmax=Math.max(...mv,102);
+  const padR=(rmax-rmin)*.12||2,padM=(mmax-mmin)*.12||2;
+  rmin-=padR;rmax+=padR;mmin-=padM;mmax+=padM;
+  const X=v=>pad+(v-rmin)/(rmax-rmin)*(W-2*pad);
+  const Y=v=>H-pad-(v-mmin)/(mmax-mmin)*(H-2*pad);
+  const cx=X(100),cy=Y(100);
+  let s=`<defs>
+    <radialGradient id="gl" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="rgba(22,199,132,.08)"/><stop offset="100%" stop-color="transparent"/></radialGradient>
+  </defs>`;
+  // quadrant tints
+  s+=`<rect x="${cx}" y="${pad}" width="${W-pad-cx}" height="${cy-pad}" fill="rgba(22,199,132,.05)"/>`;
+  s+=`<rect x="${pad}" y="${pad}" width="${cx-pad}" height="${cy-pad}" fill="rgba(77,159,255,.05)"/>`;
+  s+=`<rect x="${cx}" y="${cy}" width="${W-pad-cx}" height="${H-pad-cy}" fill="rgba(247,166,0,.05)"/>`;
+  s+=`<rect x="${pad}" y="${cy}" width="${cx-pad}" height="${H-pad-cy}" fill="rgba(237,85,101,.05)"/>`;
+  // grid cross
+  s+=`<line x1="${cx}" y1="${pad}" x2="${cx}" y2="${H-pad}" stroke="#2a3a4d" stroke-width="1.2" stroke-dasharray="4 4"/>`;
+  s+=`<line x1="${pad}" y1="${cy}" x2="${W-pad}" y2="${cy}" stroke="#2a3a4d" stroke-width="1.2" stroke-dasharray="4 4"/>`;
+  // quadrant labels
+  s+=`<text x="${W-pad-6}" y="${pad+16}" fill="#16c784" font-size="11" font-weight="700" text-anchor="end" opacity=".7" font-family="JetBrains Mono">LEADING</text>`;
+  s+=`<text x="${pad+6}" y="${pad+16}" fill="#4d9fff" font-size="11" font-weight="700" opacity=".7" font-family="JetBrains Mono">IMPROVING</text>`;
+  s+=`<text x="${W-pad-6}" y="${H-pad-8}" fill="#f7a600" font-size="11" font-weight="700" text-anchor="end" opacity=".7" font-family="JetBrains Mono">WEAKENING</text>`;
+  s+=`<text x="${pad+6}" y="${H-pad-8}" fill="#ed5565" font-size="11" font-weight="700" opacity=".7" font-family="JetBrains Mono">LAGGING</text>`;
+  // axis labels
+  s+=`<text x="${W/2}" y="${H-8}" fill="#4a5666" font-size="10" text-anchor="middle" font-family="JetBrains Mono">RS-RATIO →</text>`;
+  s+=`<text x="14" y="${H/2}" fill="#4a5666" font-size="10" text-anchor="middle" font-family="JetBrains Mono" transform="rotate(-90 14 ${H/2})">MOMENTUM →</text>`;
+  // visible set
+  const vis=all.filter(st=>(filterQ==='ALL'||st.quadrant===filterQ));
+  // tails
+  vis.forEach(st=>{
+    if(!st.trail)return;
+    const col=QCOL[st.quadrant];
+    let pts=st.trail.map(t=>[X(t.rs),Y(t.mom)]);
+    let path=pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ');
+    s+=`<path d="${path}" fill="none" stroke="${col}" stroke-width="1.4" opacity=".35"/>`;
+  });
+  // dots
+  vis.forEach(st=>{
+    const col=QCOL[st.quadrant],x=X(st.rs),y=Y(st.mom);
+    s+=`<circle cx="${x}" cy="${y}" r="5.5" fill="${col}" opacity=".9"
+        data-sym="${st.symbol}" data-rs="${st.rs}" data-mom="${st.mom}" data-q="${st.quadrant}" class="rdot"
+        style="cursor:pointer"/>`;
+    if(vis.length<=20||['LEADING'].includes(st.quadrant)){
+      s+=`<text x="${x+8}" y="${y+3}" fill="#9fb0c3" font-size="9" font-family="JetBrains Mono">${st.symbol}</text>`;
+    }
+  });
+  svg.innerHTML=s;
+  // hover
+  svg.querySelectorAll('.rdot').forEach(d=>{
+    d.addEventListener('mousemove',e=>{
+      const tt=document.getElementById('tt');
+      tt.innerHTML=`<b>${d.dataset.sym}</b> · ${d.dataset.q}<br>RS ${d.dataset.rs} · Mom ${d.dataset.mom}`;
+      tt.style.opacity=1;tt.style.left=(e.clientX+14)+'px';tt.style.top=(e.clientY+14)+'px';
+    });
+    d.addEventListener('mouseleave',()=>document.getElementById('tt').style.opacity=0);
+  });
+}
+
+function drawTable(){
+  let rows=DATA.stocks.filter(s=>(filterQ==='ALL'||s.quadrant===filterQ));
+  if(searchTxt){const t=searchTxt.toLowerCase();
+    rows=rows.filter(s=>s.symbol.toLowerCase().includes(t)||(s.sector||'').toLowerCase().includes(t)||(s.name||'').toLowerCase().includes(t));}
+  rows.sort((a,b)=>{let x=a[sortKey],y=b[sortKey];
+    if(typeof x==='string')return sortDir*x.localeCompare(y);
+    return sortDir*(x-y);});
+  document.getElementById('tbody').innerHTML=rows.map(s=>{
+    const dc=s.day_chg, dcs=(dc>=0?'+':'')+dc.toFixed(2)+'%';
+    const rsw=Math.max(0,Math.min(100,(s.rs-90)/20*100));
+    return `<tr>
+      <td><div class="sym">${s.symbol}</div><div class="nm">${s.name||''}</div></td>
+      <td><span class="sector-tag">${s.sector||'—'}</span></td>
+      <td class="num">${s.close.toLocaleString('en-IN',{minimumFractionDigits:2})}</td>
+      <td class="num ${dc>=0?'up':'down'}">${dcs}</td>
+      <td class="num">${s.rs.toFixed(2)}<div class="bar"><i style="width:${rsw}%;background:${QCOL[s.quadrant]}"></i></div></td>
+      <td class="num">${s.mom.toFixed(2)}</td>
+      <td><span class="badge ${s.quadrant}">${s.quadrant}</span></td>
+      <td><span class="sig ${s.signal}">${s.signal}</span></td>
+    </tr>`;
+  }).join('')||'<tr><td colspan="8" style="text-align:center;color:var(--faint);padding:30px">no stocks match</td></tr>';
+}
+
+function setFilter(q){filterQ=q;
+  document.querySelectorAll('#filter button').forEach(b=>b.classList.toggle('on',b.dataset.q===q));
+  render();}
+
+document.getElementById('filter').addEventListener('click',e=>{
+  if(e.target.dataset.q)setFilter(e.target.dataset.q);});
+document.getElementById('search').addEventListener('input',e=>{searchTxt=e.target.value;drawTable();});
+document.querySelectorAll('th[data-s]').forEach(th=>th.addEventListener('click',()=>{
+  const k=th.dataset.s;
+  if(sortKey===k)sortDir*=-1;else{sortKey=k;sortDir=(k==='symbol'||k==='sector')?1:-1;}
+  drawTable();}));
+
+load();
+</script>
+</body>
+</html>

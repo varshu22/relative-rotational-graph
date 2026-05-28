@@ -1,0 +1,109 @@
+# Put your RRG dashboard online (free, auto-updating, shareable link)
+
+This makes your dashboard live at a public URL anyone can open from WhatsApp.
+The data refreshes itself once a day after Indian market close. You set this up
+once; after that you never touch it.
+
+Total time: about 10 minutes. No coding needed — just clicking and copy-paste.
+
+--------------------------------------------------------------------------
+WHAT'S IN THIS FOLDER
+--------------------------------------------------------------------------
+  index.html            -> tiny redirect so the link is short
+  dashboard.html        -> your dashboard (now with a small disclaimer banner)
+  dashboard_data.json   -> the data the dashboard reads
+  prices.csv            -> price history
+  fetch_update.py       -> the daily fetch script
+  rrg_engine.py         -> the math
+  stock_meta.json       -> stock names/sectors
+  .github/workflows/update.yml  -> the robot that updates data daily
+
+ALL of these must go into the repo, including the .github folder.
+
+--------------------------------------------------------------------------
+STEP 1 — Create the repository
+--------------------------------------------------------------------------
+1. Go to https://github.com/new   (you're already logged in).
+2. Repository name: type   rrg   (or any name you like).
+3. Set it to PUBLIC. (GitHub Pages is free for public repos.)
+4. Do NOT tick "Add a README". Leave everything else default.
+5. Click "Create repository".
+
+--------------------------------------------------------------------------
+STEP 2 — Upload these files
+--------------------------------------------------------------------------
+1. On the new empty repo page, click the link "uploading an existing file".
+2. Drag ALL the files from this folder into the browser window.
+
+   IMPORTANT about the .github folder:
+   Some computers hide folders that start with a dot. The easiest reliable
+   way: drag the WHOLE folder contents in. If the workflow file doesn't show
+   up after upload (check Step 5), you can add it manually — see "If the
+   robot file is missing" at the bottom.
+
+3. At the bottom, click "Commit changes".
+
+--------------------------------------------------------------------------
+STEP 3 — Turn on GitHub Pages (this creates the public link)
+--------------------------------------------------------------------------
+1. In your repo, click "Settings" (top menu).
+2. Left sidebar -> click "Pages".
+3. Under "Build and deployment" -> "Source", choose "Deploy from a branch".
+4. Under "Branch", pick "main" and folder "/ (root)". Click "Save".
+5. Wait about 1 minute, then refresh the page. A green box appears with your
+   link, like:
+        https://YOURNAME.github.io/rrg/
+   That is the link you send on WhatsApp. Open it once to confirm it works.
+
+--------------------------------------------------------------------------
+STEP 4 — Let the robot write data back (one permission setting)
+--------------------------------------------------------------------------
+The daily updater needs permission to save new data into the repo.
+1. Settings -> left sidebar "Actions" -> "General".
+2. Scroll to "Workflow permissions".
+3. Select "Read and write permissions". Click "Save".
+
+--------------------------------------------------------------------------
+STEP 5 — Test the auto-update once by hand
+--------------------------------------------------------------------------
+1. In your repo, click the "Actions" tab.
+2. If it asks to enable workflows, click the green "I understand / enable" button.
+3. Click "Update RRG data" on the left.
+4. Click "Run workflow" (right side) -> "Run workflow" again to confirm.
+5. Wait ~1-2 minutes. A run appears; a green tick means it worked.
+   It will fetch fresh prices, recompute, and commit new dashboard_data.json.
+6. Refresh your public link. The "as of" date should be current and the
+   Feed badge should say LIVE.
+
+After this, it runs on its own every day — you do nothing.
+
+--------------------------------------------------------------------------
+HOW THE SCHEDULE WORKS
+--------------------------------------------------------------------------
+The robot runs at 12:00 UTC = 5:30 PM IST, Tuesday–Saturday UTC (which
+covers Monday–Friday Indian trading days), i.e. ~2 hours after NSE close.
+If the market was closed, it simply finds no new day and commits nothing.
+You can change the time by editing the "cron" line in update.yml; use
+https://crontab.guru to build a new value (remember it's in UTC, so subtract
+5h30m from the IST time you want).
+
+--------------------------------------------------------------------------
+TWO THINGS TO KNOW
+--------------------------------------------------------------------------
+1. 60-day sleep rule: GitHub pauses scheduled jobs if a repo has had zero
+   activity for 60 days. Since this commits data on every trading day, that
+   will essentially never happen. If it ever does, just open the Actions tab
+   and click "Run workflow" once to wake it up.
+
+2. Yahoo data is free and occasionally delayed or slightly off. Fine for this
+   use. The page now shows a disclaimer saying it's educational, not advice.
+
+--------------------------------------------------------------------------
+IF THE ROBOT FILE IS MISSING (workflow didn't upload)
+--------------------------------------------------------------------------
+If the Actions tab shows no "Update RRG data" workflow:
+1. In the repo, click "Add file" -> "Create new file".
+2. In the filename box type exactly:  .github/workflows/update.yml
+   (typing the slashes creates the folders automatically)
+3. Open update.yml from this folder in Notepad, copy ALL its text, paste it in.
+4. Click "Commit changes". Then redo Step 5.
