@@ -7,7 +7,7 @@ on:
     # GitHub cron is ALWAYS in UTC. India is UTC+5:30.
     # NSE closes 15:30 IST. We fetch at 12:00 UTC = 17:30 IST (2h after close),
     # Tuesday–Saturday UTC so it covers Mon–Fri Indian trading days.
-    - cron: "0 12 * * 2-6"
+    - cron: "30 14 * * 2-6"
   workflow_dispatch: {}
 
 # The job needs to write the updated files back to the repo.
