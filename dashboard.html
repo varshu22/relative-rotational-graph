@@ -105,6 +105,23 @@ tbody tr:hover{background:var(--panel2)}
 .bar{height:5px;border-radius:3px;background:var(--panel2);overflow:hidden;margin-top:5px}
 .bar i{display:block;height:100%;border-radius:3px}
 footer{text-align:center;color:var(--faint);font-size:11px;margin-top:20px;line-height:1.8}
+/* copy bar */
+.copybar{margin-top:14px;display:flex;gap:10px;align-items:stretch;
+  background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px;flex-wrap:wrap}
+.copybar .meta{display:flex;flex-direction:column;justify-content:center;min-width:90px;padding:0 4px 0 8px}
+.copybar .meta .k{font-size:9px;color:var(--faint);text-transform:uppercase;letter-spacing:1.5px}
+.copybar .meta .v{font-size:18px;font-weight:700;font-family:'JetBrains Mono';color:var(--accent);line-height:1.1;margin-top:2px}
+.copybar .list{flex:1;min-width:200px;background:var(--bg);border:1px solid var(--line);border-radius:7px;
+  padding:10px 12px;font-family:'JetBrains Mono';font-size:13px;color:var(--txt);
+  overflow:auto;max-height:84px;word-break:break-all;white-space:normal}
+.copybar .list.empty{color:var(--faint);font-style:italic}
+.copybar button{background:var(--accent);color:#04140d;border:none;border-radius:7px;
+  padding:0 18px;font-family:'Space Grotesk';font-weight:700;font-size:12px;letter-spacing:.5px;
+  cursor:pointer;transition:.15s;white-space:nowrap;text-transform:uppercase}
+.copybar button:hover{filter:brightness(1.1);transform:translateY(-1px)}
+.copybar button:active{transform:translateY(0)}
+.copybar button.done{background:var(--impr);color:#04140d}
+.copybar button:disabled{background:var(--faint);cursor:not-allowed;transform:none}
 .banner{background:var(--weak-bg);border:1px solid var(--weak);color:var(--weak);
   padding:10px 16px;border-radius:10px;margin-bottom:16px;font-size:12px;display:none}
 .tip{cursor:help;border-bottom:1px dotted var(--faint)}
@@ -114,9 +131,6 @@ footer{text-align:center;color:var(--faint);font-size:11px;margin-top:20px;line-
 </style>
 </head>
 <body>
-<div style="background:#1a1a1a;color:#999;font-size:11px;text-align:center;padding:5px 10px;border-bottom:1px solid #333;font-family:system-ui,sans-serif">
-  Educational tool, not investment advice. Data via Yahoo Finance (may be delayed or inaccurate). Updated daily after market close.
-</div>
 <div class="wrap">
   <header>
     <div class="brand">
@@ -185,6 +199,14 @@ footer{text-align:center;color:var(--faint);font-size:11px;margin-top:20px;line-
       </tr></thead>
       <tbody id="tbody"></tbody>
     </table>
+    </div>
+    <div class="copybar">
+      <div class="meta">
+        <div class="k">In View</div>
+        <div class="v" id="copyCount">0</div>
+      </div>
+      <div class="list empty" id="copyList">no stocks match the current filter</div>
+      <button id="copyBtn" disabled>Copy</button>
     </div>
   </div>
 
@@ -320,6 +342,41 @@ function drawTable(){
       <td><span class="sig ${s.signal}">${s.signal}</span></td>
     </tr>`;
   }).join('')||'<tr><td colspan="8" style="text-align:center;color:var(--faint);padding:30px">no stocks match</td></tr>';
+  // populate copy bar with the same set the table shows
+  const syms = rows.map(s=>s.symbol);
+  const listEl = document.getElementById('copyList');
+  const btnEl = document.getElementById('copyBtn');
+  document.getElementById('copyCount').textContent = syms.length;
+  if(syms.length){
+    listEl.textContent = syms.join(', ');
+    listEl.classList.remove('empty');
+    btnEl.disabled = false;
+  } else {
+    listEl.textContent = 'no stocks match the current filter';
+    listEl.classList.add('empty');
+    btnEl.disabled = true;
+  }
+  btnEl.textContent = 'Copy';
+  btnEl.classList.remove('done');
+}
+
+function copyList(){
+  const txt = document.getElementById('copyList').textContent;
+  const btn = document.getElementById('copyBtn');
+  // modern API first, fall back to legacy for file:// in some browsers
+  const done = ()=>{ btn.textContent = '✓ Copied'; btn.classList.add('done');
+    setTimeout(()=>{ btn.textContent='Copy'; btn.classList.remove('done'); }, 1800); };
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(done).catch(()=>fallback(txt,done));
+  } else { fallback(txt,done); }
+}
+function fallback(txt, done){
+  const ta = document.createElement('textarea');
+  ta.value = txt; ta.style.position='fixed'; ta.style.opacity='0';
+  document.body.appendChild(ta); ta.select();
+  try{ document.execCommand('copy'); done(); }
+  catch(e){ alert('Copy failed — select the text manually.'); }
+  document.body.removeChild(ta);
 }
 
 function setFilter(q){filterQ=q;
@@ -329,6 +386,7 @@ function setFilter(q){filterQ=q;
 document.getElementById('filter').addEventListener('click',e=>{
   if(e.target.dataset.q)setFilter(e.target.dataset.q);});
 document.getElementById('search').addEventListener('input',e=>{searchTxt=e.target.value;drawTable();});
+document.getElementById('copyBtn').addEventListener('click', copyList);
 document.querySelectorAll('th[data-s]').forEach(th=>th.addEventListener('click',()=>{
   const k=th.dataset.s;
   if(sortKey===k)sortDir*=-1;else{sortKey=k;sortDir=(k==='symbol'||k==='sector')?1:-1;}
